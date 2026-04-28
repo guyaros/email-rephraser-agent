@@ -277,7 +277,28 @@
     <div class="grid2" style="margin-bottom:14px;">
       <div>
         <label class="field-label">Device model</label>
-        <input type="text" id="model" placeholder="e.g. Sift Pro 200" />
+        <select id="model" onchange="toggleCustomModel(this.value)">
+          <option value="">-- Select model --</option>
+          <optgroup label="Formlabs">
+            <option value="Fuse 1+">Fuse 1+</option>
+            <option value="Sift">Sift</option>
+            <option value="Blast">Blast</option>
+            <option value="Form 4">Form 4</option>
+            <option value="Form 4B">Form 4B</option>
+            <option value="Form 4L">Form 4L</option>
+            <option value="Form 4BL">Form 4BL</option>
+          </optgroup>
+          <optgroup label="Markforged">
+            <option value="Onyx One">Onyx One</option>
+            <option value="Onyx Pro">Onyx Pro</option>
+            <option value="Mark Two">Mark Two</option>
+            <option value="X7">X7</option>
+            <option value="FX10">FX10</option>
+            <option value="FX20">FX20</option>
+          </optgroup>
+          <option value="__other__">Other...</option>
+        </select>
+        <input type="text" id="model-custom" placeholder="Type device model..." style="display:none; margin-top:6px;" />
       </div>
       <div>
         <label class="field-label">Device S/N</label>
@@ -396,6 +417,18 @@
 <script>
   let settings = {};
 
+  function toggleCustomModel(val) {
+    const custom = document.getElementById('model-custom');
+    custom.style.display = val === '__other__' ? 'block' : 'none';
+    if (val !== '__other__') custom.value = '';
+  }
+
+  function getModelValue() {
+    const sel = document.getElementById('model').value;
+    if (sel === '__other__') return document.getElementById('model-custom').value.trim();
+    return sel;
+  }
+
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -458,7 +491,7 @@
     const ctx = document.getElementById('ctx').value.trim();
     const actions = document.getElementById('actions').value.trim();
     const prevMsg = document.getElementById('prev-msg').value.trim();
-    const model = document.getElementById('model').value.trim();
+    const model = getModelValue();
     const sn = document.getElementById('sn').value.trim();
     const urgency = document.querySelector('input[name="urgency"]:checked').value;
 
