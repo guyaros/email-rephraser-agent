@@ -271,6 +271,19 @@
     </div>
   </header>
 
+  <!-- API Key card -->
+  <div class="card" style="border-color:#e8c96a; background:#fffdf0;">
+    <div class="section-title" style="color:#b06a00;">API Key</div>
+    <label class="field-label">Anthropic API Key <span style="color:var(--text3); font-weight:400;">(saved in browser, never sent anywhere else)</span></label>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input type="password" id="api-key" placeholder="sk-ant-..." style="flex:1;" oninput="saveApiKey(this.value)"/>
+      <button class="btn" onclick="toggleApiKeyVisibility()">Show</button>
+    </div>
+    <div style="font-size:11px; color:var(--text3); margin-top:6px;">
+      Get your key at <a href="https://console.anthropic.com/keys" target="_blank" style="color:var(--amber);">console.anthropic.com/keys</a>
+    </div>
+  </div>
+
   <!-- Input card -->
   <div class="card">
     <div class="section-title">Device details</div>
@@ -417,6 +430,27 @@
 <script>
   let settings = {};
 
+  // Load saved API key from localStorage
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('anthropic_api_key');
+    if (saved) document.getElementById('api-key').value = saved;
+  });
+
+  function saveApiKey(val) {
+    localStorage.setItem('anthropic_api_key', val.trim());
+  }
+
+  function toggleApiKeyVisibility() {
+    const input = document.getElementById('api-key');
+    const btn = event.target;
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
+    else { input.type = 'password'; btn.textContent = 'Show'; }
+  }
+
+  function getApiKey() {
+    return document.getElementById('api-key').value.trim();
+  }
+
   function toggleCustomModel(val) {
     const custom = document.getElementById('model-custom');
     custom.style.display = val === '__other__' ? 'block' : 'none';
@@ -444,12 +478,15 @@
   }
 
   async function callClaude(prompt) {
+    const apiKey = getApiKey();
+    if (!apiKey) { throw new Error('Please enter your Anthropic API key at the top.'); }
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'x-api-key': apiKey
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
