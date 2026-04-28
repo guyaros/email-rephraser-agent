@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Supplier Email Assistant</title>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f2ee;
+    --surface: #ffffff;
+    --surface2: #f9f7f4;
+    --border: #e2ddd6;
+    --border2: #cec9c0;
+    --text: #1a1714;
+    --text2: #6b6560;
+    --text3: #a09a93;
+    --accent: #2d5a3d;
+    --accent-light: #e8f0eb;
+    --amber: #b06a00;
+    --amber-light: #fef3e2;
+    --red: #b02a2a;
+    --red-light: #fdeaea;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .app {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .logo {
+    width: 38px; height: 38px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+
+  header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+  header p { font-size: 13px; color: var(--text2); margin-top: 1px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .card:nth-child(2) { animation-delay: 0.05s; }
+  .card:nth-child(3) { animation-delay: 0.1s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 10px;
+  }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  label.field-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  input[type="text"], select, textarea {
+    width: 100%;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: var(--text);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    appearance: none;
+  }
+  input[type="text"]:focus, select:focus, textarea:focus {
+    border-color: var(--border2);
+    background: var(--surface);
+  }
+  textarea { resize: vertical; line-height: 1.6; }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+    cursor: pointer;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+  /* Urgency pills */
+  .urgency-group { display: flex; gap: 8px; }
+  .urgency-opt { flex: 1; }
+  .urgency-opt input { display: none; }
+  .urgency-opt label {
+    display: block; text-align: center;
+    padding: 7px 6px; font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer; transition: all 0.15s;
+    color: var(--text2);
+    background: var(--surface2);
+    user-select: none;
+  }
+  .urgency-opt label:hover { border-color: var(--border2); }
+  .urgency-opt.low input:checked + label { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .urgency-opt.normal input:checked + label { border-color: var(--amber); color: var(--amber); background: var(--amber-light); }
+  .urgency-opt.high input:checked + label { border-color: var(--red); color: var(--red); background: var(--red-light); }
+
+  /* Buttons */
+  .btn {
+    font-family: Arial, sans-serif;
+    font-size: 12px; font-weight: 500;
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn:hover { background: var(--surface2); border-color: var(--border2); }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn.primary {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+  }
+  .btn.primary:hover { background: #234d33; border-color: #234d33; }
+  .btn.full { width: 100%; }
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+  .btn-row .btn { flex: 1; }
+
+  /* Spinner */
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+  }
+  .spinner.dark { border-color: rgba(0,0,0,0.15); border-top-color: var(--text2); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Output section */
+  #output-card { display: none; }
+  #output-card.visible { display: block; animation: fadeUp 0.3s ease both; }
+
+  .output-subject-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .subject-tag {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text3);
+    white-space: nowrap;
+  }
+  #out-subject {
+    flex: 1; background: var(--surface2);
+    font-family: Arial, sans-serif;
+    font-size: 12px; font-weight: 500;
+  }
+
+  .mono-body {
+    font-family: Arial, sans-serif;
+    font-size: 12px; line-height: 1.75;
+  }
+
+  .status-bar {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text2);
+    padding: 8px 0 0;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: #fff;
+    font-size: 13px; font-weight: 500;
+    padding: 8px 20px; border-radius: 99px;
+    opacity: 0; transition: all 0.2s ease;
+    pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Copy modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 1.25rem;
+    width: 90%; max-width: 560px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    animation: fadeUp 0.2s ease both;
+  }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .modal-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .modal-hint { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+  .modal-close {
+    background: none; border: none; font-size: 18px; cursor: pointer;
+    color: var(--text3); line-height: 1; padding: 2px 6px;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal textarea {
+    width: 100%; height: 280px; font-family: Arial, sans-serif;
+    font-size: 12px; line-height: 1.6; resize: none;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px; outline: none;
+    color: var(--text);
+  }
+
+  .field-group { margin-bottom: 12px; }
+  .field-group:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16v3H4zM4 10h10M4 14h12M4 18h8"/><path d="M18 14l2 2-4 4" stroke-width="2.2"/></svg>
+    </div>
+    <div>
+      <h1>Supplier Email Assistant</h1>
+      <p>Rephrase support emails professionally with AI</p>
+    </div>
+  </header>
+
+  <!-- Input card -->
+  <div class="card">
+    <div class="section-title">Device details</div>
+    <div class="grid2" style="margin-bottom:14px;">
+      <div>
+        <label class="field-label">Device model</label>
+        <input type="text" id="model" placeholder="e.g. Sift Pro 200" />
+      </div>
+      <div>
+        <label class="field-label">Device S/N</label>
+        <input type="text" id="sn" placeholder="e.g. SN-2024-00847" />
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-title">Urgency</div>
+    <div class="urgency-group" style="margin-bottom:14px;">
+      <div class="urgency-opt low">
+        <input type="radio" name="urgency" id="u-low" value="Low — not time-critical" checked />
+        <label for="u-low">Low</label>
+      </div>
+      <div class="urgency-opt normal">
+        <input type="radio" name="urgency" id="u-normal" value="Normal — affecting operations" />
+        <label for="u-normal">Normal</label>
+      </div>
+      <div class="urgency-opt high">
+        <input type="radio" name="urgency" id="u-high" value="High — production blocker" />
+        <label for="u-high">High — production blocker</label>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="field-group">
+      <label class="field-label">Your draft</label>
+      <textarea id="draft" rows="6" placeholder="Paste your rough draft, notes, or bullet points here..."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Context (optional)</label>
+      <textarea id="ctx" rows="2" placeholder="E.g. issue ongoing 3 weeks, under warranty, supplier hasn't responded..."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Actions taken (optional)</label>
+      <textarea id="actions" rows="2" placeholder="E.g. restarted the device, replaced the sensor, updated firmware to v2.3..."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Previous message received (optional)</label>
+      <textarea id="prev-msg" rows="3" placeholder="Paste the supplier's last reply here so the agent understands the conversation context..."></textarea>
+    </div>
+
+    <div class="grid2" style="margin-bottom:14px;">
+      <div>
+        <label class="field-label">Tone</label>
+        <select id="tone">
+          <option value="professional and firm">Professional & firm</option>
+          <option value="polite and collaborative">Polite & collaborative</option>
+          <option value="urgent and assertive">Urgent & assertive</option>
+          <option value="friendly but direct">Friendly but direct</option>
+          <option value="formal and precise">Formal & precise</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Goal</label>
+        <select id="goal">
+          <option value="request a fix or resolution">Request a fix / resolution</option>
+          <option value="escalate an unresolved issue">Escalate an issue</option>
+          <option value="follow up on a previous request">Follow up</option>
+          <option value="request a status update">Request status update</option>
+          <option value="claim warranty or replacement">Claim warranty / replacement</option>
+          <option value="get a quote or pricing">Get a quote / pricing</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn primary full" id="rephrase-btn" onclick="rephrase()">
+      Rephrase email
+    </button>
+  </div>
+
+  <!-- Output card -->
+  <div class="card" id="output-card">
+    <div class="section-title">Result — edit & refine</div>
+
+    <div class="output-subject-row">
+      <span class="subject-tag">Subject</span>
+      <input type="text" id="out-subject" placeholder="Subject line..." onclick="this.select()" />
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <label class="field-label" style="margin:0;">Body</label>
+      <span style="font-size:11px; color:var(--text3);">לחץ על הטקסט ← Ctrl+A להכל ← Ctrl+C להעתקה</span>
+    </div>
+    <textarea id="out-body" rows="10" class="mono-body" placeholder="Email body will appear here..." onclick="this.select()"></textarea>
+
+    <div class="btn-row">
+      <button class="btn" onclick="openModal('body')">Copy body</button>
+      <button class="btn" onclick="openModal('all')">Copy all</button>
+      <button class="btn primary" id="improve-btn" onclick="improve()">Improve this version</button>
+    </div>
+
+    <div class="status-bar" id="status-bar" style="display:none;">
+      <span class="status-dot"></span>
+      <span id="status-msg">Processing...</span>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="copy-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Copy email</span>
+      <button class="modal-close" onclick="document.getElementById('copy-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-hint">לחץ בתוך הטקסט ← Ctrl+A לבחירת הכל ← Ctrl+C להעתקה</div>
+    <textarea id="modal-text" readonly onclick="this.select()"></textarea>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let settings = {};
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  function setStatus(msg) {
+    const bar = document.getElementById('status-bar');
+    const txt = document.getElementById('status-msg');
+    if (msg) { bar.style.display = 'flex'; txt.textContent = msg; }
+    else { bar.style.display = 'none'; }
+  }
+
+  async function callClaude(prompt) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    return data.content?.find(b => b.type === 'text')?.text || '';
+  }
+
+  function parseOutput(text) {
+    const subjectMatch = text.match(/Subject:\s*(.+)/i);
+    const bodyMatch = text.match(/Body:\s*([\s\S]+?)(?:---DONE---|$)/i);
+    return {
+      subject: subjectMatch ? subjectMatch[1].trim() : '',
+      body: bodyMatch ? bodyMatch[1].trim() : text.trim()
+    };
+  }
+
+  function populateOutput(subject, body) {
+    document.getElementById('out-subject').value = subject;
+    document.getElementById('out-body').value = body;
+    const card = document.getElementById('output-card');
+    card.classList.add('visible');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function rephrase() {
+    const draft = document.getElementById('draft').value.trim();
+    if (!draft) { showToast('Please paste your email draft first.'); return; }
+
+    const tone = document.getElementById('tone').value;
+    const goal = document.getElementById('goal').value;
+    const ctx = document.getElementById('ctx').value.trim();
+    const actions = document.getElementById('actions').value.trim();
+    const prevMsg = document.getElementById('prev-msg').value.trim();
+    const model = document.getElementById('model').value.trim();
+    const sn = document.getElementById('sn').value.trim();
+    const urgency = document.querySelector('input[name="urgency"]:checked').value;
+
+    settings = { tone, goal, urgency };
+
+    const deviceLine = (model || sn)
+      ? `\nDevice info: ${[model ? 'Model: ' + model : '', sn ? 'S/N: ' + sn : ''].filter(Boolean).join(' | ')}`
+      : '';
+    const ctxLine = ctx ? `\nAdditional context: ${ctx}` : '';
+    const actionsLine = actions ? `\nActions already taken: ${actions}` : '';
+    const prevMsgLine = prevMsg ? `\n\nPrevious message received from supplier:\n"""\n${prevMsg}\n"""` : '';
+
+    const prompt = `Please rephrase the following supplier email draft. Use a "${tone}" tone. The goal is to "${goal}".
+Urgency level: ${urgency}${deviceLine}${ctxLine}${actionsLine}${prevMsgLine}
+
+Rules:
+- Keep all key facts and specific details
+- Be clear and concise — no filler phrases
+- Never use em-dashes (—) or double hyphens (--) anywhere in the output; use a comma, colon, or rewrite the sentence instead
+- Use professional, supplier-appropriate language
+- If device model or S/N are provided, include them clearly in the email body
+- If actions already taken are listed, mention them clearly in the email
+- If a previous message from the supplier is provided, use it to understand the conversation context and make the reply relevant and coherent
+- Reflect the urgency level in the tone and wording
+- Structure: brief opener → issue/request → expected action → closing
+- End the email with: "Best regards,"
+- Output in this exact format:
+
+Subject: [generated subject line]
+
+Body:
+[rephrased email body]
+
+---DONE---
+
+Original draft:
+${draft}`;
+
+    const btn = document.getElementById('rephrase-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Rephrasing...';
+
+    try {
+      const text = await callClaude(prompt);
+      const { subject, body } = parseOutput(text);
+      populateOutput(subject, body);
+    } catch(e) {
+      showToast('Error: ' + (e.message || 'Something went wrong'));
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Rephrase email';
+  }
+
+  async function improve() {
+    const subject = document.getElementById('out-subject').value.trim();
+    const body = document.getElementById('out-body').value.trim();
+    if (!subject && !body) { showToast('Nothing to improve yet.'); return; }
+
+    const prompt = `I have edited this supplier email. Please improve it slightly: fix any grammar, improve flow and professionalism, and ensure it reads naturally. Keep all the content and intent exactly as written. Do not change the meaning or add new information. Never use em-dashes (—) or double hyphens (--) anywhere in the output.
+
+Tone: ${settings.tone || 'professional and firm'}
+Goal: ${settings.goal || 'request a fix or resolution'}
+Urgency: ${settings.urgency || 'Low'}
+
+Current subject: ${subject}
+Current body:
+${body}
+
+Output in this exact format:
+
+Subject: [improved subject line]
+
+Body:
+[improved email body]
+
+---DONE---`;
+
+    const btn = document.getElementById('improve-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Improving...';
+    setStatus('Polishing your email...');
+
+    try {
+      const text = await callClaude(prompt);
+      const { subject: s, body: b } = parseOutput(text);
+      populateOutput(s, b);
+      showToast('Improved!');
+    } catch(e) {
+      showToast('Error: ' + (e.message || 'Something went wrong'));
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Improve this version';
+    setStatus(null);
+  }
+
+  function removeEmDash(text) {
+    return text.replace(/—/g, '-').replace(/--/g, '-');
+  }
+
+  function openModal(mode) {
+    const subject = document.getElementById('out-subject').value.trim();
+    const body = removeEmDash(document.getElementById('out-body').value.trim());
+    const text = mode === 'all' ? `Subject: ${subject}\n\n${body}` : body;
+    const modalText = document.getElementById('modal-text');
+    modalText.value = text;
+    document.getElementById('copy-modal').classList.add('open');
+    setTimeout(() => { modalText.focus(); modalText.select(); }, 80);
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('copy-modal')) {
+      document.getElementById('copy-modal').classList.remove('open');
+    }
+  }
+
+  // legacy aliases
+  function copyAll() { openModal('all'); }
+  function copyBody() { openModal('body'); }
+  function selectAll() { openModal('all'); }
+  function selectBody() { openModal('body'); }
+</script>
+</body>
+</html>
