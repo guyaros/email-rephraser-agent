@@ -317,6 +317,13 @@
             <option value="FX10">FX10</option>
             <option value="FX20">FX20</option>
           </optgroup>
+          <optgroup label="HP">
+            <option value="HP 4200">HP 4200</option>
+            <option value="HP 5200">HP 5200</option>
+            <option value="HP 5600">HP 5600</option>
+            <option value="HP 540">HP 540</option>
+            <option value="HP 580">HP 580</option>
+          </optgroup>
           <option value="__other__">Other...</option>
         </select>
         <input type="text" id="model-custom" placeholder="Type device model..." style="display:none; margin-top:6px;" />
@@ -481,6 +488,12 @@
     'Form 4B': [...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
     'Form 4L': [...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
     'Form 4BL':[...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
+    'HP':      [...DEFAULT_ACTIONS],
+    'HP 4200': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
+    'HP 5200': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
+    'HP 5600': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
+    'HP 540':  [...DEFAULT_ACTIONS, 'Print heads cleaned'],
+    'HP 580':  [...DEFAULT_ACTIONS, 'Print heads cleaned'],
   };
 
   function updateActionPresets(modelVal) {
@@ -610,7 +623,7 @@ Rules:
 - Use professional, supplier-appropriate language
 - Always refer to the device as the customer's equipment, not ours
 - If device model or S/N are provided, include them clearly in the email body
-- If actions already taken are listed, mention them clearly in the email
+- If actions taken are listed, include them in the email as a bullet point list under a short intro line like "The following actions have been taken:"
 - If a previous message from the supplier is provided, use it to understand the conversation context and make the reply relevant and coherent
 - Reflect the urgency level in the tone and wording
 - Structure: brief opener, issue/request, expected action, closing
@@ -650,7 +663,7 @@ ${draft}`;
 
     const prompt = `You are helping a reseller/support company write professional emails to equipment suppliers on behalf of their customers. Always refer to the equipment as "our customer's device" or "the customer's unit", not "our device" or "our equipment", unless the context clearly states otherwise.
 
-I have edited this supplier email. Please improve it slightly: fix any grammar, improve flow and professionalism, and ensure it reads naturally. Keep all the content and intent exactly as written. Do not change the meaning or add new information. Never use em-dashes or double hyphens anywhere in the output.
+I have edited this supplier email. Please improve it slightly: fix any grammar, improve flow and professionalism, and ensure it reads naturally. Keep all the content and intent exactly as written. Do not change the meaning or add new information. Never use em-dashes or double hyphens anywhere in the output. If actions taken are listed, keep them as bullet points.
 
 Tone: ${settings.tone || 'professional and firm'}
 Goal: ${settings.goal || 'request a fix or resolution'}
