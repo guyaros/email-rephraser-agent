@@ -297,9 +297,10 @@
     <div class="grid2" style="margin-bottom:14px;">
       <div>
         <label class="field-label">Device model</label>
-        <select id="model" onchange="toggleCustomModel(this.value)">
+        <select id="model" onchange="toggleCustomModel(this.value); updateActionPresets(this.value)">
           <option value="">-- Select model --</option>
           <optgroup label="Formlabs">
+            <option value="Fuse 1">Fuse 1</option>
             <option value="Fuse 1+">Fuse 1+</option>
             <option value="Sift">Sift</option>
             <option value="Blast">Blast</option>
@@ -344,24 +345,22 @@
     </div>
 
     <div class="divider"></div>
+
+    <div class="field-group">
+      <label class="field-label">Previous message received (optional)</label>
+      <textarea id="prev-msg" rows="3" placeholder="Paste the supplier's last reply here so the agent understands the conversation context..."></textarea>
+    </div>
+
     <div class="field-group">
       <label class="field-label">Your draft</label>
       <textarea id="draft" rows="6" placeholder="Paste your rough draft, notes, or bullet points here..."></textarea>
     </div>
 
-    <div class="field-group">
-      <label class="field-label">Context (optional)</label>
-      <textarea id="ctx" rows="2" placeholder="E.g. issue ongoing 3 weeks, under warranty, supplier hasn't responded..."></textarea>
-    </div>
 
     <div class="field-group">
       <label class="field-label">Actions taken (optional)</label>
+      <div id="action-checkboxes" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:7px;"></div>
       <textarea id="actions" rows="2" placeholder="E.g. restarted the device, replaced the sensor, updated firmware to v2.3..."></textarea>
-    </div>
-
-    <div class="field-group">
-      <label class="field-label">Previous message received (optional)</label>
-      <textarea id="prev-msg" rows="3" placeholder="Paste the supplier's last reply here so the agent understands the conversation context..."></textarea>
     </div>
 
     <div class="grid2" style="margin-bottom:14px;">
@@ -448,6 +447,7 @@
   window.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('anthropic_api_key');
     if (saved) document.getElementById('api-key').value = saved;
+    updateActionPresets(''); // load default presets
   });
 
   function saveApiKey(val) {
@@ -463,6 +463,51 @@
 
   function getApiKey() {
     return document.getElementById('api-key').value.trim();
+  }
+
+  // ── Action presets per device ──────────────────────────────────
+  const DEFAULT_ACTIONS = [
+    'Media files uploaded',
+    'Logs uploaded',
+    'Firmware is up to date'
+  ];
+
+  const DEVICE_ACTIONS = {
+    'Fuse 1':  [...DEFAULT_ACTIONS, 'Optical pathway cleaned', 'Powder cleaned thoroughly'],
+    'Fuse 1+': [...DEFAULT_ACTIONS, 'Optical pathway cleaned', 'Powder cleaned thoroughly'],
+    'Sift':    [...DEFAULT_ACTIONS, 'Hopper cleaned thoroughly', 'Shutter rail cleaned'],
+    'Blast':   [...DEFAULT_ACTIONS, 'Hopper cleaned thoroughly'],
+    'Form 4':  [...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
+    'Form 4B': [...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
+    'Form 4L': [...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
+    'Form 4BL':[...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
+  };
+
+  function updateActionPresets(modelVal) {
+    const container = document.getElementById('action-checkboxes');
+    const presets = DEVICE_ACTIONS[modelVal] || DEFAULT_ACTIONS;
+    container.innerHTML = '';
+    presets.forEach(val => {
+      const lbl = document.createElement('label');
+      lbl.style.cssText = 'display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = val;
+      cb.onchange = syncCheckboxes;
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode(val));
+      container.appendChild(lbl);
+    });
+    // Clear actions textarea when model changes
+    document.getElementById('actions').value = '';
+  }
+
+  function syncCheckboxes() {
+    const allPresets = Array.from(document.querySelectorAll('#action-checkboxes input[type=checkbox]')).map(c => c.value);
+    const checked = Array.from(document.querySelectorAll('#action-checkboxes input[type=checkbox]:checked')).map(c => c.value);
+    const manual = document.getElementById('actions').value;
+    const manualLines = manual.split('\n').filter(l => l.trim() && !allPresets.includes(l.trim()));
+    document.getElementById('actions').value = [...checked, ...manualLines].join('\n');
   }
 
   function toggleCustomModel(val) {
@@ -539,7 +584,6 @@
 
     const tone = document.getElementById('tone').value;
     const goal = document.getElementById('goal').value;
-    const ctx = document.getElementById('ctx').value.trim();
     const actions = document.getElementById('actions').value.trim();
     const prevMsg = document.getElementById('prev-msg').value.trim();
     const model = getModelValue();
@@ -551,23 +595,25 @@
     const deviceLine = (model || sn)
       ? `\nDevice info: ${[model ? 'Model: ' + model : '', sn ? 'S/N: ' + sn : ''].filter(Boolean).join(' | ')}`
       : '';
-    const ctxLine = ctx ? `\nAdditional context: ${ctx}` : '';
     const actionsLine = actions ? `\nActions already taken: ${actions}` : '';
     const prevMsgLine = prevMsg ? `\n\nPrevious message received from supplier:\n"""\n${prevMsg}\n"""` : '';
 
-    const prompt = `Please rephrase the following supplier email draft. Use a "${tone}" tone. The goal is to "${goal}".
-Urgency level: ${urgency}${deviceLine}${ctxLine}${actionsLine}${prevMsgLine}
+    const prompt = `You are helping a reseller/support company write professional emails to equipment suppliers on behalf of their customers. The writer is NOT the end customer — they are the reseller or support engineer contacting the supplier about a customer's equipment issue. Always refer to the equipment as "our customer's device" or "the customer's unit", not "our device" or "our equipment", unless the context clearly states otherwise.
+
+Please rephrase the following supplier email draft. Use a "${tone}" tone. The goal is to "${goal}".
+Urgency level: ${urgency}${deviceLine}${actionsLine}${prevMsgLine}
 
 Rules:
 - Keep all key facts and specific details
-- Be clear and concise — no filler phrases
-- Never use em-dashes (—) or double hyphens (--) anywhere in the output; use a comma, colon, or rewrite the sentence instead
+- Be clear and concise - no filler phrases
+- Never use em-dashes or double hyphens anywhere in the output; use a comma, colon, or rewrite the sentence instead
 - Use professional, supplier-appropriate language
+- Always refer to the device as the customer's equipment, not ours
 - If device model or S/N are provided, include them clearly in the email body
 - If actions already taken are listed, mention them clearly in the email
 - If a previous message from the supplier is provided, use it to understand the conversation context and make the reply relevant and coherent
 - Reflect the urgency level in the tone and wording
-- Structure: brief opener → issue/request → expected action → closing
+- Structure: brief opener, issue/request, expected action, closing
 - End the email with: "Best regards,"
 - Output in this exact format:
 
@@ -602,7 +648,9 @@ ${draft}`;
     const body = document.getElementById('out-body').value.trim();
     if (!subject && !body) { showToast('Nothing to improve yet.'); return; }
 
-    const prompt = `I have edited this supplier email. Please improve it slightly: fix any grammar, improve flow and professionalism, and ensure it reads naturally. Keep all the content and intent exactly as written. Do not change the meaning or add new information. Never use em-dashes (—) or double hyphens (--) anywhere in the output.
+    const prompt = `You are helping a reseller/support company write professional emails to equipment suppliers on behalf of their customers. Always refer to the equipment as "our customer's device" or "the customer's unit", not "our device" or "our equipment", unless the context clearly states otherwise.
+
+I have edited this supplier email. Please improve it slightly: fix any grammar, improve flow and professionalism, and ensure it reads naturally. Keep all the content and intent exactly as written. Do not change the meaning or add new information. Never use em-dashes or double hyphens anywhere in the output.
 
 Tone: ${settings.tone || 'professional and firm'}
 Goal: ${settings.goal || 'request a fix or resolution'}
