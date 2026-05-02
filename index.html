@@ -70,8 +70,8 @@
     animation: fadeUp 0.4s ease both;
   }
 
-  .card:nth-child(2) { animation-delay: 0.05s; }
-  .card:nth-child(3) { animation-delay: 0.1s; }
+  .card:nth-child(3) { animation-delay: 0.05s; }
+  .card:nth-child(4) { animation-delay: 0.1s; }
 
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(10px); }
@@ -266,7 +266,7 @@
       <svg viewBox="0 0 24 24"><path d="M4 4h16v3H4zM4 10h10M4 14h12M4 18h8"/><path d="M18 14l2 2-4 4" stroke-width="2.2"/></svg>
     </div>
     <div style="flex:1;">
-      <h1>Email Rephraser Agent</h1>
+      <h1>Email Rephraser Agent <span id="version-badge" style="font-size:11px; font-weight:500; color:var(--text3); background:var(--surface2); border:1px solid var(--border); border-radius:99px; padding:2px 8px; letter-spacing:0.03em; vertical-align:middle;"></span></h1>
       <p>Rephrase support emails professionally with AI</p>
     </div>
     <!-- Gear icon -->
@@ -284,7 +284,7 @@
     <label class="field-label">Anthropic API Key <span style="color:var(--text3); font-weight:400;">(saved in browser only)</span></label>
     <div style="display:flex; gap:8px; align-items:center;">
       <input type="password" id="api-key" placeholder="sk-ant-..." style="flex:1;" oninput="saveApiKey(this.value)"/>
-      <button class="btn" style="margin-top:0; width:auto; padding:7px 12px;" onclick="toggleApiKeyVisibility()">Show</button>
+      <button class="btn" style="margin-top:0; width:auto; padding:7px 12px;" onclick="toggleApiKeyVisibility(event)">Show</button>
     </div>
     <div style="font-size:11px; color:var(--text3); margin-top:5px;">
       Get your key at <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--amber);">console.anthropic.com</a>
@@ -440,28 +440,27 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  const VERSION = 'v1.1';
   let settings = {};
 
   function toggleSettings() {
     const panel = document.getElementById('settings-panel');
-    const arrow = document.getElementById('settings-arrow');
-    const open = panel.style.display === 'none';
-    panel.style.display = open ? 'block' : 'none';
-    arrow.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
   }
 
   // Load saved API key from localStorage
   window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('version-badge').textContent = VERSION;
     const saved = localStorage.getItem('anthropic_api_key');
     if (saved) document.getElementById('api-key').value = saved;
-    updateActionPresets(''); // load default presets
+    updateActionPresets('');
   });
 
   function saveApiKey(val) {
     localStorage.setItem('anthropic_api_key', val.trim());
   }
 
-  function toggleApiKeyVisibility() {
+  function toggleApiKeyVisibility(event) {
     const input = document.getElementById('api-key');
     const btn = event.target;
     if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
@@ -488,7 +487,6 @@
     'Form 4B': [...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
     'Form 4L': [...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
     'Form 4BL':[...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
-    'HP':      [...DEFAULT_ACTIONS],
     'HP 4200': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
     'HP 5200': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
     'HP 5600': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
@@ -561,7 +559,7 @@
         'x-api-key': apiKey
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -721,11 +719,6 @@ Body:
     }
   }
 
-  // legacy aliases
-  function copyAll() { openModal('all'); }
-  function copyBody() { openModal('body'); }
-  function selectAll() { openModal('all'); }
-  function selectBody() { openModal('body'); }
 </script>
 </body>
 </html>
