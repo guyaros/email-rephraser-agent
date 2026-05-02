@@ -308,6 +308,14 @@
             <option value="Form 4B">Form 4B</option>
             <option value="Form 4L">Form 4L</option>
             <option value="Form 4BL">Form 4BL</option>
+            <option value="Wash V1">Wash V1</option>
+            <option value="Wash V2">Wash V2</option>
+            <option value="Wash L V1">Wash L V1</option>
+            <option value="Wash L V2">Wash L V2</option>
+            <option value="Cure V1">Cure V1</option>
+            <option value="Cure V2">Cure V2</option>
+            <option value="Cure L">Cure L</option>
+            <option value="Cure L V2">Cure L V2</option>
           </optgroup>
           <optgroup label="Markforged">
             <option value="Onyx One">Onyx One</option>
@@ -440,7 +448,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const VERSION = 'v1.1';
+  const VERSION = 'v1.2';
   let settings = {};
 
   function toggleSettings() {
@@ -487,6 +495,14 @@
     'Form 4B': [...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
     'Form 4L': [...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
     'Form 4BL':[...DEFAULT_ACTIONS, 'Resin tank inspected', 'Build platform cleaned'],
+    'Wash V1': [...DEFAULT_ACTIONS, 'IPA bath replaced', 'Wash basket cleaned'],
+    'Wash V2': [...DEFAULT_ACTIONS, 'IPA bath replaced', 'Wash basket cleaned'],
+    'Wash L V1':[...DEFAULT_ACTIONS, 'IPA bath replaced', 'Wash basket cleaned'],
+    'Wash L V2':[...DEFAULT_ACTIONS, 'IPA bath replaced', 'Wash basket cleaned'],
+    'Cure V1': [...DEFAULT_ACTIONS, 'Turntable cleaned', 'UV chamber inspected'],
+    'Cure V2': [...DEFAULT_ACTIONS, 'Turntable cleaned', 'UV chamber inspected'],
+    'Cure L':  [...DEFAULT_ACTIONS, 'Turntable cleaned', 'UV chamber inspected'],
+    'Cure L V2':[...DEFAULT_ACTIONS, 'Turntable cleaned', 'UV chamber inspected'],
     'HP 4200': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
     'HP 5200': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
     'HP 5600': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
