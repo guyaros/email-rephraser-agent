@@ -349,11 +349,11 @@
     <div class="section-title">Urgency</div>
     <div class="urgency-group" style="margin-bottom:14px;">
       <div class="urgency-opt low">
-        <input type="radio" name="urgency" id="u-low" value="Low — not time-critical" checked />
+        <input type="radio" name="urgency" id="u-low" value="Low — not time-critical" />
         <label for="u-low">Low</label>
       </div>
       <div class="urgency-opt normal">
-        <input type="radio" name="urgency" id="u-normal" value="Normal — affecting operations" />
+        <input type="radio" name="urgency" id="u-normal" value="Normal — affecting operations" checked />
         <label for="u-normal">Normal</label>
       </div>
       <div class="urgency-opt high">
@@ -473,7 +473,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const VERSION = 'v1.2 · May 2026';
+  const VERSION = 'v1.3 · May 2026';
   let settings = {};
 
   function toggleSettings() {
