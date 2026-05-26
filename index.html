@@ -370,13 +370,13 @@
     </div>
 
     <div class="field-group">
-      <label class="field-label">Your draft</label>
-      <textarea id="draft" rows="6" placeholder="Paste your rough draft, notes, or bullet points here..."></textarea>
+      <label class="field-label">Recipient name (optional)</label>
+      <input type="text" id="recipient" placeholder="e.g. John, Sarah, Support Team..." />
     </div>
 
     <div class="field-group">
-      <label class="field-label">Recipient name (optional)</label>
-      <input type="text" id="recipient" placeholder="e.g. John, Sarah, Support Team..." />
+      <label class="field-label">Your draft</label>
+      <textarea id="draft" rows="6" placeholder="Paste your rough draft, notes, or bullet points here..."></textarea>
     </div>
 
     <div class="field-group">
@@ -400,6 +400,7 @@
         <label class="field-label">Goal</label>
         <select id="goal">
           <option value="request a fix or resolution">Request a fix / resolution</option>
+          <option value="reply to an incoming email from the supplier">Reply to incoming email</option>
           <option value="escalate an unresolved issue">Escalate an issue</option>
           <option value="follow up on a previous request">Follow up</option>
           <option value="request a status update">Request status update</option>
