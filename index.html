@@ -332,6 +332,9 @@
             <option value="HP 540">HP 540</option>
             <option value="HP 580">HP 580</option>
           </optgroup>
+          <optgroup label="Creaform / Peel3D">
+            <option value="Peel 3 Scanner">Peel 3 Scanner</option>
+          </optgroup>
           <option value="__other__">Other...</option>
         </select>
         <input type="text" id="model-custom" placeholder="Type device model..." style="display:none; margin-top:6px;" />
@@ -355,7 +358,7 @@
       </div>
       <div class="urgency-opt high">
         <input type="radio" name="urgency" id="u-high" value="High — production blocker" />
-        <label for="u-high">High — production blocker</label>
+        <label for="u-high">High (Blocker)</label>
       </div>
     </div>
 
@@ -378,7 +381,7 @@
       <textarea id="actions" rows="2" placeholder="E.g. restarted the device, replaced the sensor, updated firmware to v2.3..."></textarea>
     </div>
 
-    <div class="grid2" style="margin-bottom:14px;">
+    <div class="grid2" style="margin-bottom:10px;">
       <div>
         <label class="field-label">Tone</label>
         <select id="tone">
@@ -399,6 +402,28 @@
           <option value="claim warranty or replacement">Claim warranty / replacement</option>
           <option value="get a quote or pricing">Get a quote / pricing</option>
         </select>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Length</label>
+      <div class="urgency-group">
+        <div class="urgency-opt low">
+          <input type="radio" name="length" id="len-detailed" value="detailed" />
+          <label for="len-detailed">Detailed</label>
+        </div>
+        <div class="urgency-opt low">
+          <input type="radio" name="length" id="len-normal" value="normal" checked />
+          <label for="len-normal">Normal</label>
+        </div>
+        <div class="urgency-opt low">
+          <input type="radio" name="length" id="len-concise" value="concise" />
+          <label for="len-concise">Concise</label>
+        </div>
+        <div class="urgency-opt low">
+          <input type="radio" name="length" id="len-very-concise" value="very concise" />
+          <label for="len-very-concise">Very concise</label>
+        </div>
       </div>
     </div>
 
@@ -448,7 +473,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const VERSION = 'v1.2';
+  const VERSION = 'v1.2 · May 2026';
   let settings = {};
 
   function toggleSettings() {
@@ -483,7 +508,8 @@
   const DEFAULT_ACTIONS = [
     'Media files uploaded',
     'Logs uploaded',
-    'Firmware is up to date'
+    'Firmware is up to date',
+    'Software up to date'
   ];
 
   const DEVICE_ACTIONS = {
@@ -503,6 +529,7 @@
     'Cure V2': [...DEFAULT_ACTIONS, 'Turntable cleaned', 'UV chamber inspected'],
     'Cure L':  [...DEFAULT_ACTIONS, 'Turntable cleaned', 'UV chamber inspected'],
     'Cure L V2':[...DEFAULT_ACTIONS, 'Turntable cleaned', 'UV chamber inspected'],
+    'Peel 3 Scanner': [...DEFAULT_ACTIONS, 'Scanner calibrated', 'Targets cleaned'],
     'HP 4200': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
     'HP 5200': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
     'HP 5600': [...DEFAULT_ACTIONS, 'Print heads cleaned', 'Carriage belt inspected'],
@@ -616,8 +643,9 @@
     const model = getModelValue();
     const sn = document.getElementById('sn').value.trim();
     const urgency = document.querySelector('input[name="urgency"]:checked').value;
+    const length = document.querySelector('input[name="length"]:checked').value;
 
-    settings = { tone, goal, urgency };
+    settings = { tone, goal, urgency, length };
 
     const deviceLine = (model || sn)
       ? `\nDevice info: ${[model ? 'Model: ' + model : '', sn ? 'S/N: ' + sn : ''].filter(Boolean).join(' | ')}`
@@ -625,14 +653,21 @@
     const actionsLine = actions ? `\nActions already taken: ${actions}` : '';
     const prevMsgLine = prevMsg ? `\n\nPrevious message received from supplier:\n"""\n${prevMsg}\n"""` : '';
 
+    const lengthInstruction = {
+      'detailed':     'Write in full detail — be thorough, elaborate on context, and do not omit any relevant information.',
+      'normal':       'Write at a normal length — balanced and complete without being verbose.',
+      'concise':      'Keep the email concise and to the point. Remove any unnecessary sentences.',
+      'very concise': 'Keep the email very brief — 3 to 5 short sentences maximum. Essential information only, no filler.'
+    }[length];
+
     const prompt = `You are helping a reseller/support company write professional emails to equipment suppliers on behalf of their customers. The writer is NOT the end customer — they are the reseller or support engineer contacting the supplier about a customer's equipment issue. Always refer to the equipment as "our customer's device" or "the customer's unit", not "our device" or "our equipment", unless the context clearly states otherwise.
 
 Please rephrase the following supplier email draft. Use a "${tone}" tone. The goal is to "${goal}".
-Urgency level: ${urgency}${deviceLine}${actionsLine}${prevMsgLine}
+Urgency level: ${urgency}
+Email length: ${length} — ${lengthInstruction}${deviceLine}${actionsLine}${prevMsgLine}
 
 Rules:
 - Keep all key facts and specific details
-- Be clear and concise - no filler phrases
 - Never use em-dashes or double hyphens anywhere in the output; use a comma, colon, or rewrite the sentence instead
 - Use professional, supplier-appropriate language
 - Always refer to the device as the customer's equipment, not ours
@@ -640,6 +675,7 @@ Rules:
 - If actions taken are listed, include them in the email as a bullet point list under a short intro line like "The following actions have been taken:"
 - If a previous message from the supplier is provided, use it to understand the conversation context and make the reply relevant and coherent
 - Reflect the urgency level in the tone and wording
+- Strictly follow the length instruction above
 - Structure: brief opener, issue/request, expected action, closing
 - End the email with: "Best regards,"
 - Output in this exact format:
@@ -682,6 +718,7 @@ I have edited this supplier email. Please improve it slightly: fix any grammar, 
 Tone: ${settings.tone || 'professional and firm'}
 Goal: ${settings.goal || 'request a fix or resolution'}
 Urgency: ${settings.urgency || 'Low'}
+Length: ${settings.length || 'normal'}
 
 Current subject: ${subject}
 Current body:
