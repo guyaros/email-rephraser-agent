@@ -658,7 +658,7 @@
       : '';
     const actionsLine = actions ? `\nActions already taken: ${actions}` : '';
     const prevMsgLine = prevMsg ? `\n\nPrevious message received from supplier:\n"""\n${prevMsg}\n"""` : '';
-    const recipientLine = recipient ? `\nRecipient name: ${recipient} (open the email with "Dear ${recipient}," — not "Dear Sir/Madam" or "To whom it may concern")` : '';
+    const recipientLine = recipient ? `\nRecipient name: ${recipient} (open the email with "Hi ${recipient}," — never use "Dear")` : '\nDo not use "Dear" — if no recipient name is provided, start directly with the email content or use "Hi," as the opener.';
 
     const lengthInstruction = {
       'detailed':     'Write in full detail — be thorough, elaborate on context, and do not omit any relevant information.',
