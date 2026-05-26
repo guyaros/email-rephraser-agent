@@ -374,6 +374,10 @@
       <textarea id="draft" rows="6" placeholder="Paste your rough draft, notes, or bullet points here..."></textarea>
     </div>
 
+    <div class="field-group">
+      <label class="field-label">Recipient name (optional)</label>
+      <input type="text" id="recipient" placeholder="e.g. John, Sarah, Support Team..." />
+    </div>
 
     <div class="field-group">
       <label class="field-label">Actions taken (optional)</label>
@@ -386,7 +390,7 @@
         <label class="field-label">Tone</label>
         <select id="tone">
           <option value="professional and firm">Professional & firm</option>
-          <option value="polite and collaborative">Polite & collaborative</option>
+          <option value="polite and collaborative" selected>Polite & collaborative</option>
           <option value="urgent and assertive">Urgent & assertive</option>
           <option value="friendly but direct">Friendly but direct</option>
           <option value="formal and precise">Formal & precise</option>
@@ -644,6 +648,7 @@
     const sn = document.getElementById('sn').value.trim();
     const urgency = document.querySelector('input[name="urgency"]:checked').value;
     const length = document.querySelector('input[name="length"]:checked').value;
+    const recipient = document.getElementById('recipient').value.trim();
 
     settings = { tone, goal, urgency, length };
 
@@ -652,6 +657,7 @@
       : '';
     const actionsLine = actions ? `\nActions already taken: ${actions}` : '';
     const prevMsgLine = prevMsg ? `\n\nPrevious message received from supplier:\n"""\n${prevMsg}\n"""` : '';
+    const recipientLine = recipient ? `\nRecipient name: ${recipient} (open the email with "Dear ${recipient}," — not "Dear Sir/Madam" or "To whom it may concern")` : '';
 
     const lengthInstruction = {
       'detailed':     'Write in full detail — be thorough, elaborate on context, and do not omit any relevant information.',
@@ -664,7 +670,7 @@
 
 Please rephrase the following supplier email draft. Use a "${tone}" tone. The goal is to "${goal}".
 Urgency level: ${urgency}
-Email length: ${length} — ${lengthInstruction}${deviceLine}${actionsLine}${prevMsgLine}
+Email length: ${length} — ${lengthInstruction}${deviceLine}${actionsLine}${recipientLine}${prevMsgLine}
 
 Rules:
 - Keep all key facts and specific details
