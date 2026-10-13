@@ -272,6 +272,33 @@
   </div>
 </div>
 
+<!-- Diff modal -->
+<div class="modal fade" id="diff-modal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title mb-0">Review changes</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="rejectDiff()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3" id="diff-subject-wrap">
+          <div class="form-label small mb-1">Subject</div>
+          <div class="p-2 border rounded bg-body-tertiary" id="diff-subject" style="line-height:1.6;"></div>
+        </div>
+        <div class="form-label small mb-1">Body</div>
+        <div class="p-3 border rounded bg-body-tertiary mono-body" id="diff-body" style="line-height:1.8; white-space:pre-wrap;"></div>
+        <div class="form-text mt-2">
+          <span class="text-success">Green</span> = added, <span class="text-danger text-decoration-line-through">red</span> = removed
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" onclick="rejectDiff()">Keep previous version</button>
+        <button type="button" class="btn btn-primary" onclick="acceptDiff()">Accept changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast-container position-fixed bottom-0 start-50 translate-middle-x mb-4" style="z-index:1080;">
   <div class="toast align-items-center text-bg-dark border-0" id="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -282,8 +309,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
 <script>
-  const VERSION = 'v2.1 · Oct 2026';
+  const VERSION = 'v2.2 · Oct 2026';
   let settings = {};
 
   function applyTheme(theme) {
@@ -585,8 +613,7 @@ Body:
     try {
       const text = await callClaude(prompt);
       const { subject: s, body: b } = parseOutput(text);
-      populateOutput(s, b);
-      showToast('Improved!');
+      showDiff(subject, body, s, b);
     } catch(e) {
       showToast('Error: ' + (e.message || 'Something went wrong'));
     }
@@ -594,6 +621,40 @@ Body:
     btn.disabled = false;
     btn.innerHTML = 'Improve this version';
     setStatus(null);
+  }
+
+  // ── Diff review (shown after "Improve this version") ──────────
+  let pendingDiff = null;
+
+  function renderWordDiff(oldText, newText) {
+    const parts = Diff.diffWords(oldText, newText);
+    return parts.map(part => {
+      const escaped = part.value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      if (part.added) return `<span class="text-success bg-success-subtle">${escaped}</span>`;
+      if (part.removed) return `<span class="text-danger bg-danger-subtle text-decoration-line-through">${escaped}</span>`;
+      return escaped;
+    }).join('');
+  }
+
+  function showDiff(oldSubject, oldBody, newSubject, newBody) {
+    pendingDiff = { subject: newSubject, body: newBody };
+    document.getElementById('diff-subject').innerHTML = renderWordDiff(oldSubject, newSubject);
+    document.getElementById('diff-body').innerHTML = renderWordDiff(oldBody, newBody);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('diff-modal')).show();
+  }
+
+  function acceptDiff() {
+    if (pendingDiff) {
+      populateOutput(pendingDiff.subject, pendingDiff.body);
+      showToast('Improved!');
+    }
+    pendingDiff = null;
+    bootstrap.Modal.getInstance(document.getElementById('diff-modal'))?.hide();
+  }
+
+  function rejectDiff() {
+    pendingDiff = null;
+    bootstrap.Modal.getInstance(document.getElementById('diff-modal'))?.hide();
   }
 
   function removeEmDash(text) {
