@@ -293,6 +293,19 @@
 
   <!-- Input card -->
   <div class="card">
+    <div class="section-title">Writing as</div>
+    <div class="urgency-group" style="margin-bottom:14px;">
+      <div class="urgency-opt low">
+        <input type="radio" name="perspective" id="persp-self" value="myself" checked />
+        <label for="persp-self">Myself</label>
+      </div>
+      <div class="urgency-opt normal">
+        <input type="radio" name="perspective" id="persp-customer" value="customer" />
+        <label for="persp-customer">On behalf of a customer</label>
+      </div>
+    </div>
+
+    <div class="divider"></div>
     <div class="section-title">Device details</div>
     <div class="grid2" style="margin-bottom:14px;">
       <div>
@@ -349,15 +362,15 @@
     <div class="section-title">Urgency</div>
     <div class="urgency-group" style="margin-bottom:14px;">
       <div class="urgency-opt low">
-        <input type="radio" name="urgency" id="u-low" value="Low — not time-critical" />
+        <input type="radio" name="urgency" id="u-low" value="Low — not time-sensitive" />
         <label for="u-low">Low</label>
       </div>
       <div class="urgency-opt normal">
-        <input type="radio" name="urgency" id="u-normal" value="Normal — affecting operations" checked />
+        <input type="radio" name="urgency" id="u-normal" value="Normal — standard priority" checked />
         <label for="u-normal">Normal</label>
       </div>
       <div class="urgency-opt high">
-        <input type="radio" name="urgency" id="u-high" value="High — production blocker" />
+        <input type="radio" name="urgency" id="u-high" value="High — urgent, needs prompt attention" />
         <label for="u-high">High (Blocker)</label>
       </div>
     </div>
@@ -366,7 +379,7 @@
 
     <div class="field-group">
       <label class="field-label">Previous message received (optional)</label>
-      <textarea id="prev-msg" rows="3" placeholder="Paste the supplier's last reply here so the agent understands the conversation context..."></textarea>
+      <textarea id="prev-msg" rows="3" placeholder="Paste the previous message you received here so the agent understands the conversation context..."></textarea>
     </div>
 
     <div class="field-group">
@@ -399,8 +412,9 @@
       <div>
         <label class="field-label">Goal</label>
         <select id="goal">
+          <option value="write a clear and appropriate reply or message based on the draft and context provided">General correspondence</option>
           <option value="request a fix or resolution">Request a fix / resolution</option>
-          <option value="reply to an incoming email from the supplier">Reply to incoming email</option>
+          <option value="reply to an incoming email">Reply to incoming email</option>
           <option value="escalate an unresolved issue">Escalate an issue</option>
           <option value="follow up on a previous request">Follow up</option>
           <option value="request a status update">Request status update</option>
@@ -416,10 +430,6 @@
         <div class="urgency-opt low">
           <input type="radio" name="length" id="len-detailed" value="detailed" />
           <label for="len-detailed">Detailed</label>
-        </div>
-        <div class="urgency-opt low">
-          <input type="radio" name="length" id="len-normal" value="normal" />
-          <label for="len-normal">Normal</label>
         </div>
         <div class="urgency-opt low">
           <input type="radio" name="length" id="len-concise" value="concise" checked />
@@ -478,7 +488,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const VERSION = 'v1.3 · May 2026';
+  const VERSION = 'v1.5 · Oct 2026';
   let settings = {};
 
   function toggleSettings() {
@@ -603,12 +613,15 @@
       headers: {
         'Content-Type': 'application/json',
         'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'server-side-fallback-2026-07-01',
         'anthropic-dangerous-direct-browser-access': 'true',
         'x-api-key': apiKey
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        model: 'claude-opus-5-5',
+        max_tokens: 4096,
+        output_config: { effort: 'low' },
+        fallbacks: 'default',
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -617,6 +630,9 @@
       throw new Error(err?.error?.message || `HTTP ${res.status}`);
     }
     const data = await res.json();
+    if (data.stop_reason === 'refusal') {
+      throw new Error(data.stop_details?.explanation || 'The request was declined by Anthropic\'s safety checks.');
+    }
     return data.content?.find(b => b.type === 'text')?.text || '';
   }
 
@@ -650,40 +666,50 @@
     const urgency = document.querySelector('input[name="urgency"]:checked').value;
     const length = document.querySelector('input[name="length"]:checked').value;
     const recipient = document.getElementById('recipient').value.trim();
+    const onBehalfOfCustomer = document.querySelector('input[name="perspective"]:checked').value === 'customer';
 
-    settings = { tone, goal, urgency, length };
+    const hasDeviceContext = !!(model || sn || actions);
+    settings = { tone, goal, urgency, length, hasDeviceContext, onBehalfOfCustomer };
 
     const deviceLine = (model || sn)
       ? `\nDevice info: ${[model ? 'Model: ' + model : '', sn ? 'S/N: ' + sn : ''].filter(Boolean).join(' | ')}`
       : '';
     const actionsLine = actions ? `\nActions already taken: ${actions}` : '';
-    const prevMsgLine = prevMsg ? `\n\nPrevious message received from supplier:\n"""\n${prevMsg}\n"""` : '';
+    const prevMsgLine = prevMsg ? `\n\nPrevious message received:\n"""\n${prevMsg}\n"""` : '';
     const recipientLine = recipient ? `\nRecipient name: ${recipient} (open the email with "Hi ${recipient}," — never use "Dear")` : '\nDo not use "Dear" — if no recipient name is provided, start directly with the email content or use "Hi," as the opener.';
 
     const lengthInstruction = {
       'detailed':     'Write in full detail — be thorough, elaborate on context, and do not omit any relevant information.',
-      'normal':       'Write at a normal length — balanced and complete without being verbose.',
       'concise':      'Keep the email concise and to the point. Remove any unnecessary sentences.',
       'very concise': 'Keep the email very brief — 3 to 5 short sentences maximum. Essential information only, no filler.'
     }[length];
 
-    const prompt = `You are helping a reseller/support company write professional emails to equipment suppliers on behalf of their customers. The writer is NOT the end customer — they are the reseller or support engineer contacting the supplier about a customer's equipment issue. Always refer to the equipment as "our customer's device" or "the customer's unit", not "our device" or "our equipment", unless the context clearly states otherwise.
+    const roleFraming = onBehalfOfCustomer
+      ? `You are helping a reseller/support company write professional emails to equipment suppliers on behalf of their customers. The writer is NOT the end customer — they are the reseller or support engineer contacting the supplier about a customer's equipment issue. Always refer to the equipment as "our customer's device" or "the customer's unit", not "our device" or "our equipment", unless the context clearly states otherwise.`
+      : `You are helping the writer draft a professional email in their own voice, in the first person, on their own behalf — not on behalf of a customer or any other party. ${hasDeviceContext ? 'If device details are mentioned, refer to the equipment as "my device" or "our equipment", never "the customer\'s device".' : ''} The subject may be anything — do not assume it is about equipment, support tickets, or suppliers unless the draft itself says so. Base the content entirely on the draft and context given below.`;
 
-Please rephrase the following supplier email draft. Use a "${tone}" tone. The goal is to "${goal}".
+    const deviceRules = hasDeviceContext
+      ? `\n- If device model or S/N are provided, include them clearly in the email body\n- If actions taken are listed, include them in the email as a bullet point list under a short intro line like "The following actions have been taken:"${onBehalfOfCustomer ? '\n- Always refer to the device as the customer\'s equipment, not ours' : ''}`
+      : '';
+
+    const structureLine = hasDeviceContext
+      ? 'Structure: brief opener, issue/request, expected action, closing'
+      : 'Structure: brief opener, main content, any next steps or requests, closing';
+
+    const prompt = `${roleFraming}
+
+Please rephrase the following email draft. Use a "${tone}" tone. The goal is to "${goal}".
 Urgency level: ${urgency}
 Email length: ${length} — ${lengthInstruction}${deviceLine}${actionsLine}${recipientLine}${prevMsgLine}
 
 Rules:
 - Keep all key facts and specific details
 - Never use em-dashes or double hyphens anywhere in the output; use a comma, colon, or rewrite the sentence instead
-- Use professional, supplier-appropriate language
-- Always refer to the device as the customer's equipment, not ours
-- If device model or S/N are provided, include them clearly in the email body
-- If actions taken are listed, include them in the email as a bullet point list under a short intro line like "The following actions have been taken:"
-- If a previous message from the supplier is provided, use it to understand the conversation context and make the reply relevant and coherent
+- Use professional language appropriate for the recipient and subject matter${deviceRules}
+- If a previous message is provided, use it to understand the conversation context and make the reply relevant and coherent
 - Reflect the urgency level in the tone and wording
 - Strictly follow the length instruction above
-- Structure: brief opener, issue/request, expected action, closing
+- ${structureLine}
 - End the email with: "Best regards,"
 - Output in this exact format:
 
@@ -718,14 +744,18 @@ ${draft}`;
     const body = document.getElementById('out-body').value.trim();
     if (!subject && !body) { showToast('Nothing to improve yet.'); return; }
 
-    const prompt = `You are helping a reseller/support company write professional emails to equipment suppliers on behalf of their customers. Always refer to the equipment as "our customer's device" or "the customer's unit", not "our device" or "our equipment", unless the context clearly states otherwise.
+    const roleFraming = settings.onBehalfOfCustomer
+      ? `You are helping a reseller/support company write professional emails to equipment suppliers on behalf of their customers. Always refer to the equipment as "our customer's device" or "the customer's unit", not "our device" or "our equipment", unless the context clearly states otherwise.`
+      : `You are helping the writer polish a well-written email written in their own voice, on their own behalf — not on behalf of a customer or any other party. The subject may be anything — do not assume it is about equipment or support unless the text itself says so.`;
 
-I have edited this supplier email. Please improve it slightly: fix any grammar, improve flow and professionalism, and ensure it reads naturally. Keep all the content and intent exactly as written. Do not change the meaning or add new information. Never use em-dashes or double hyphens anywhere in the output. If actions taken are listed, keep them as bullet points.
+    const prompt = `${roleFraming}
+
+I have edited this email. Please improve it slightly: fix any grammar, improve flow and professionalism, and ensure it reads naturally. Keep all the content and intent exactly as written. Do not change the meaning or add new information. Never use em-dashes or double hyphens anywhere in the output. If actions taken are listed, keep them as bullet points.
 
 Tone: ${settings.tone || 'professional and firm'}
 Goal: ${settings.goal || 'request a fix or resolution'}
 Urgency: ${settings.urgency || 'Low'}
-Length: ${settings.length || 'normal'}
+Length: ${settings.length || 'concise'}
 
 Current subject: ${subject}
 Current body:
